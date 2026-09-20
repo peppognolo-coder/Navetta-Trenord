@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Applica subito il tema salvato (o la preferenza di sistema) prima che
+      // React monti, per evitare un lampo del tema sbagliato al caricamento.
+      // Stessa logica di src/hooks/useTheme.ts — duplicata qui perché deve
+      // girare come script inline, non come modulo importato. Pattern identico
+      // a Supremi Advisor (solo la chiave localStorage cambia).
+      (function () {
+        try {
+          var stored = localStorage.getItem('navetta_theme');
+          var dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Navetta Trenord" />
+    <title>Navetta Trenord</title>
+    <link rel="icon" type="image/png" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
