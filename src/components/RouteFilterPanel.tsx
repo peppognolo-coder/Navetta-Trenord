@@ -98,22 +98,28 @@ export default function RouteFilterPanel({
       </div>
 
       {/* ORARIO */}
-      <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
-        <div>
-          <label className="section-title text-[10px]">Orario di partenza</label>
+      {/* iOS Safari: <input type="time"> ha una dimensione interna fissa
+          (i segmenti ora/minuti del suo shadow DOM nativo) che non si
+          comprime col CSS — con una grid a due colonne rigida, il rendering
+          interno sborda e si sovrappone al pulsante accanto. Con flex-wrap
+          invece, se i due non entrano affiancati il pulsante va a capo da
+          solo: mai sovrapposizione, su nessuno schermo. */}
+      <div>
+        <label className="section-title text-[10px]">Orario di partenza</label>
+        <div className="flex flex-wrap gap-2 mt-1">
           <input
             type="time"
             value={orario}
             onChange={(e) => onOrarioChange(e.target.value)}
-            className="admin-input mt-1"
+            className="admin-input flex-1 min-w-[150px]"
           />
+          <button
+            onClick={onAdesso}
+            className="flex-shrink-0 bg-trenord-green/10 dark:bg-trenord-green/20 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-trenord-green-dark dark:text-trenord-green-light active:scale-95 transition-transform"
+          >
+            Adesso
+          </button>
         </div>
-        <button
-          onClick={onAdesso}
-          className="bg-trenord-green/10 dark:bg-trenord-green/20 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-trenord-green-dark dark:text-trenord-green-light active:scale-95 transition-transform"
-        >
-          Adesso
-        </button>
       </div>
 
       {/* PERIODICITÀ ATTIVA OGGI */}
