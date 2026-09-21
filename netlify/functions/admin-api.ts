@@ -24,7 +24,9 @@ type Action =
   | 'deleteCorsa'
   | 'addFestivita'
   | 'deleteFestivita'
-  | 'toggleAttivaFermata';
+  | 'toggleAttivaFermata'
+  | 'getSegnalazioni'
+  | 'updateSegnalazione';
 
 interface RequestBody {
   action: Action;
@@ -292,6 +294,46 @@ export const handler: Handler = async (event: HandlerEvent) => {
       const { data, error } = await supabase
         .from('fermate')
         .update({ attiva: attiva ?? true })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) return dbErr(error.message);
+      return ok(data);
+    }
+
+    // ============================================================
+    // SEGNALAZIONI — lette solo da qui: la RLS pubblica permette solo
+    // l'insert (fatto direttamente dal client con la chiave anon), mai
+    // la lettura, quindi passa sempre dal service_role.
+    // ============================================================
+    if (action === 'getSegnalazioni') {
+      const { data, error } = await supabase
+        .from('segnalazioni')
+        .select(
+          `id, tipo, descrizione, stato, risposta_admin, created_at, updated_at,
+           corsa_id, fermata_id,
+           corse ( codice, direzione ),
+           fermate ( codice, nome )`
+        )
+        .order('created_at', { ascending: false });
+      if (error) return dbErr(error.message);
+      return ok(data);
+    }
+
+    if (action === 'updateSegnalazione') {
+      const { id, stato, rispostaAdmin } = (payload ?? {}) as {
+        id?: string;
+        stato?: string;
+        rispostaAdmin?: string | null;
+      };
+      if (!id) return err({ ...ERRORS.MISSING_PAYLOAD, message: 'Campo obbligatorio: id' });
+      const { data, error } = await supabase
+        .from('segnalazioni')
+        .update({
+          ...(stato ? { stato } : {}),
+          ...(rispostaAdmin !== undefined ? { risposta_admin: rispostaAdmin } : {}),
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', id)
         .select()
         .single();
