@@ -6,6 +6,8 @@ export interface Fermata {
   nome: string;
   indirizzo?: string;
   aRichiesta: boolean;
+  /** uuid reale della riga in `fermate`, per collegare le segnalazioni. */
+  dbId?: string;
 }
 
 export interface CorsaStop {
@@ -18,6 +20,8 @@ export interface Corsa {
   periodicita: TipoServizioCodice;
   direzione: Direzione;
   stops: CorsaStop[];
+  /** uuid reale della riga in `corse`, per collegare le segnalazioni. */
+  dbId?: string;
 }
 
 export interface Favorita {
