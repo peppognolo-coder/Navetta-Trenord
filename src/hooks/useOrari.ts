@@ -51,13 +51,14 @@ export function useOrari() {
     try {
       const { data: fermateRows, error: errF } = await supabase
         .from('fermate')
-        .select('codice, nome, a_richiesta')
+        .select('id, codice, nome, a_richiesta')
         .eq('attiva', true)
         .order('ordine_default');
       if (errF) throw errF;
 
       const fermate: Fermata[] = (fermateRows ?? []).map((f) => ({
         id: f.codice,
+        dbId: f.id,
         nome: INDIRIZZI[f.codice] ?? f.nome,
         aRichiesta: f.a_richiesta,
       }));
@@ -66,7 +67,7 @@ export function useOrari() {
         .from('corse')
         .select(
           `
-          codice, direzione,
+          id, codice, direzione,
           tipi_servizio ( codice ),
           corse_fermate ( orario, ordine, fermate ( codice ) )
         `
@@ -76,6 +77,7 @@ export function useOrari() {
 
       const corse: Corsa[] = (corseRows ?? []).map((c: any) => ({
         id: c.codice,
+        dbId: c.id,
         periodicita: c.tipi_servizio.codice,
         direzione: c.direzione,
         stops: [...c.corse_fermate]
