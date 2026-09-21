@@ -39,7 +39,7 @@ export default function CorsaCard({ corsa, fermate, origine, destinazione, orari
 
   const badgeClasses =
     rem?.urgency === 'imminent'
-      ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400'
+      ? 'bg-amber-500 dark:bg-amber-500 text-white'
       : rem?.urgency === 'soon'
       ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400'
       : 'bg-trenord-green/10 dark:bg-trenord-green/20 text-trenord-green-dark dark:text-trenord-green-light';
@@ -47,11 +47,17 @@ export default function CorsaCard({ corsa, fermate, origine, destinazione, orari
   return (
     <div
       onClick={() => setExpanded((v) => !v)}
-      className={`relative overflow-hidden rounded-2xl border shadow-sm p-4 cursor-pointer transition-transform active:scale-[0.99] card-hover ${
+      className={`relative overflow-hidden rounded-2xl p-4 cursor-pointer transition-transform active:scale-[0.99] card-hover ${
         isImminente
-          ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800'
-          : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'
-      } ${isFirst ? 'border-l-4 border-l-trenord-green' : 'border-l-4 border-l-trenord-green/30'}`}
+          ? 'bg-amber-100 dark:bg-amber-900/50 border-2 border-amber-400 dark:border-amber-600 shadow-md shadow-amber-200/60 dark:shadow-amber-950/40'
+          : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm'
+      } ${
+        isImminente
+          ? 'border-l-[6px] border-l-amber-500 dark:border-l-amber-500'
+          : isFirst
+          ? 'border-l-4 border-l-trenord-green'
+          : 'border-l-4 border-l-trenord-green/30'
+      }`}
     >
       {isFirst && (
         <span className="absolute top-3 right-3.5 bg-trenord-green text-white text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded">
@@ -65,7 +71,11 @@ export default function CorsaCard({ corsa, fermate, origine, destinazione, orari
       )}
 
       <div className="flex items-start justify-between mb-2 pr-16">
-        <div className="text-[28px] font-extrabold text-gray-900 dark:text-gray-50 leading-none tracking-tight">
+        <div
+          className={`text-[28px] font-extrabold leading-none tracking-tight ${
+            isImminente ? 'text-amber-900 dark:text-amber-200' : 'text-gray-900 dark:text-gray-50'
+          }`}
+        >
           {orarioPartenza}
         </div>
         {rem && (
