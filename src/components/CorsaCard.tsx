@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, AlertTriangle } from 'lucide-react';
 import type { Corsa, Fermata, Direzione } from '../types';
 import { periodicitaTag, remainingLabel } from '../lib/time';
+import ReportModal from './ReportModal';
 
 interface Props {
   corsa: Corsa;
@@ -26,6 +27,7 @@ function dirLabel(d: Direzione): string {
 
 export default function CorsaCard({ corsa, fermate, origine, destinazione, orarioPartenza, isFirst }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   const rem = remainingLabel(orarioPartenza);
   const isImminente = rem?.urgency === 'imminent';
@@ -132,10 +134,29 @@ export default function CorsaCard({ corsa, fermate, origine, destinazione, orari
               </div>
             );
           })}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setReporting(true);
+            }}
+            className="flex items-center justify-center gap-1.5 mt-2 text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Segnala un problema con questa corsa
+          </button>
+
           <p className="text-[10px] text-gray-300 dark:text-gray-600 text-center mt-1.5">
             Tocca di nuovo per chiudere
           </p>
         </div>
+      )}
+
+      {reporting && (
+        <ReportModal
+          onClose={() => setReporting(false)}
+          corsaId={corsa.dbId}
+          corsaLabel={`Corsa ${corsa.id.replace(/[ab]$/, '')} · ${dirLabel(corsa.direzione)}`}
+        />
       )}
 
       <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
