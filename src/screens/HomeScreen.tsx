@@ -4,6 +4,7 @@ import { useOrari } from '../hooks/useOrari';
 import { useFavorites } from '../hooks/useFavorites';
 import RouteFilterPanel from '../components/RouteFilterPanel';
 import FavoritesList from '../components/FavoritesList';
+import SupremiAdvisorBanner from '../components/SupremiAdvisorBanner';
 import CorsaCard from '../components/CorsaCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -150,6 +151,8 @@ export default function HomeScreen() {
           ✓ Tratta salvata
         </p>
       )}
+
+      <SupremiAdvisorBanner />
 
       <div className="flex items-center justify-between px-1">
         <span className="section-title">Prossime corse</span>
