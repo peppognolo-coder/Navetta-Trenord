@@ -73,6 +73,23 @@ export interface StopInput {
   ordine: number;
 }
 
+export type SegnalazioneTipo = 'orario_errato' | 'corsa_cancellata' | 'fermata_mancante' | 'altro';
+export type SegnalazioneStato = 'aperta' | 'in_carico' | 'risolta' | 'archiviata';
+
+export interface AdminSegnalazione {
+  id: string;
+  tipo: SegnalazioneTipo;
+  descrizione: string | null;
+  stato: SegnalazioneStato;
+  risposta_admin: string | null;
+  created_at: string;
+  updated_at: string;
+  corsa_id: string | null;
+  fermata_id: string | null;
+  corse: { codice: string; direzione: 'A' | 'B' } | null;
+  fermate: { codice: string; nome: string } | null;
+}
+
 // -------------------------------------------------------------
 // helper interno
 // -------------------------------------------------------------
@@ -177,4 +194,20 @@ export async function toggleAttivaFermata(
   attiva: boolean
 ): Promise<AdminApiResult<AdminFermata>> {
   return call<AdminFermata>('toggleAttivaFermata', adminPin, { id, attiva });
+}
+
+// -------------------------------------------------------------
+// SEGNALAZIONI
+// -------------------------------------------------------------
+
+export async function getSegnalazioni(adminPin: string): Promise<AdminApiResult<AdminSegnalazione[]>> {
+  return call<AdminSegnalazione[]>('getSegnalazioni', adminPin);
+}
+
+export async function updateSegnalazione(
+  adminPin: string,
+  id: string,
+  payload: { stato?: SegnalazioneStato; rispostaAdmin?: string | null }
+): Promise<AdminApiResult<AdminSegnalazione>> {
+  return call<AdminSegnalazione>('updateSegnalazione', adminPin, { id, ...payload });
 }
