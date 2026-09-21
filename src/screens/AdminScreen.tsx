@@ -11,6 +11,7 @@ import {
   Loader2,
   ArrowLeft,
   LogOut,
+  Flag,
 } from 'lucide-react';
 import {
   getOrari,
@@ -21,8 +22,12 @@ import {
   deleteCorsa,
   addFestivita,
   deleteFestivita,
+  getSegnalazioni,
+  updateSegnalazione,
   type AdminOrariData,
   type AdminCorsa,
+  type AdminSegnalazione,
+  type SegnalazioneStato,
   type StopInput,
 } from '../lib/adminApi';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -35,7 +40,28 @@ interface Props {
   onLogout: () => void;
 }
 
-type Tab = 'corse' | 'festivita';
+type Tab = 'corse' | 'festivita' | 'segnalazioni';
+
+const TIPO_LABEL: Record<string, string> = {
+  orario_errato: 'Orario errato',
+  corsa_cancellata: 'Corsa cancellata',
+  fermata_mancante: 'Fermata mancante',
+  altro: 'Altro',
+};
+
+const STATO_LABEL: Record<SegnalazioneStato, string> = {
+  aperta: 'Aperta',
+  in_carico: 'In carico',
+  risolta: 'Risolta',
+  archiviata: 'Archiviata',
+};
+
+const STATO_NEXT: Record<SegnalazioneStato, SegnalazioneStato> = {
+  aperta: 'in_carico',
+  in_carico: 'risolta',
+  risolta: 'archiviata',
+  archiviata: 'aperta',
+};
 
 // Stato del form di modifica/creazione corsa
 interface CorsaFormState {
@@ -54,6 +80,7 @@ function emptyForm(direzione: Direzione, tipoServizioId: string): CorsaFormState
 export default function AdminScreen({ adminPin, onBack, onLogout }: Props) {
   const [tab, setTab] = useState<Tab>('corse');
   const [data, setData] = useState<AdminOrariData | null>(null);
+  const [segnalazioni, setSegnalazioni] = useState<AdminSegnalazione[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [direzioneFiltro, setDirezioneFiltro] = useState<Direzione>('A');
@@ -68,14 +95,31 @@ export default function AdminScreen({ adminPin, onBack, onLogout }: Props) {
   async function load() {
     setLoading(true);
     setError(null);
-    const res = await getOrari(adminPin);
-    if (!res.ok || !res.data) {
-      setError(res.error?.message ?? 'Errore nel caricamento dei dati.');
+    const [orariRes, segnRes] = await Promise.all([getOrari(adminPin), getSegnalazioni(adminPin)]);
+    if (!orariRes.ok || !orariRes.data) {
+      setError(orariRes.error?.message ?? 'Errore nel caricamento dei dati.');
       setLoading(false);
       return;
     }
-    setData(res.data);
+    setData(orariRes.data);
+    if (segnRes.ok && segnRes.data) setSegnalazioni(segnRes.data);
     setLoading(false);
+  }
+
+  const segnalazioniAperte = useMemo(
+    () => segnalazioni.filter((s) => s.stato === 'aperta' || s.stato === 'in_carico').length,
+    [segnalazioni]
+  );
+
+  async function handleCambiaStato(s: AdminSegnalazione) {
+    const nuovoStato = STATO_NEXT[s.stato];
+    const res = await updateSegnalazione(adminPin, s.id, { stato: nuovoStato });
+    if (!res.ok) {
+      flash(res.error?.message ?? 'Errore');
+      return;
+    }
+    flash(`Segnata come "${STATO_LABEL[nuovoStato]}"`);
+    load();
   }
 
   useEffect(() => {
@@ -284,6 +328,22 @@ export default function AdminScreen({ adminPin, onBack, onLogout }: Props) {
           <CalendarDays className="w-4 h-4" />
           Festività
         </button>
+        <button
+          onClick={() => setTab('segnalazioni')}
+          className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-colors ${
+            tab === 'segnalazioni'
+              ? 'bg-trenord-green text-white'
+              : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+          }`}
+        >
+          <Flag className="w-4 h-4" />
+          Segnalazioni
+          {segnalazioniAperte > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
+              {segnalazioniAperte}
+            </span>
+          )}
+        </button>
       </div>
 
       {loading && <LoadingSpinner message="Caricamento dati admin..." />}
@@ -420,6 +480,68 @@ export default function AdminScreen({ adminPin, onBack, onLogout }: Props) {
             ))}
           </div>
         </>
+      )}
+
+      {!loading && !error && tab === 'segnalazioni' && (
+        <div className="flex flex-col gap-2">
+          {segnalazioni.length === 0 && (
+            <EmptyState icon={Flag} title="Nessuna segnalazione" description="Non ci sono segnalazioni al momento." />
+          )}
+          {segnalazioni.map((s) => (
+            <div
+              key={s.id}
+              className={`bg-white dark:bg-gray-900 border rounded-2xl px-4 py-3 flex flex-col gap-1.5 ${
+                s.stato === 'aperta'
+                  ? 'border-amber-300 dark:border-amber-700'
+                  : 'border-gray-100 dark:border-gray-800'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400">
+                    {TIPO_LABEL[s.tipo] ?? s.tipo}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                      s.stato === 'aperta'
+                        ? 'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400'
+                        : s.stato === 'in_carico'
+                        ? 'bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
+                        : s.stato === 'risolta'
+                        ? 'bg-trenord-green/10 text-trenord-green-dark dark:text-trenord-green-light'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
+                    }`}
+                  >
+                    {STATO_LABEL[s.stato]}
+                  </span>
+                </div>
+                <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                  {new Date(s.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                  {' · '}
+                  {new Date(s.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+
+              {(s.corse || s.fermate) && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {s.corse && `Corsa ${s.corse.codice} · direzione ${s.corse.direzione}`}
+                  {s.fermate && `Fermata: ${s.fermate.nome}`}
+                </p>
+              )}
+
+              {s.descrizione && (
+                <p className="text-sm text-gray-700 dark:text-gray-200">{s.descrizione}</p>
+              )}
+
+              <button
+                onClick={() => handleCambiaStato(s)}
+                className="self-start mt-1 text-xs font-semibold text-trenord-green-dark dark:text-trenord-green-light hover:opacity-70 transition-opacity"
+              >
+                Segna come "{STATO_LABEL[STATO_NEXT[s.stato]]}"
+              </button>
+            </div>
+          ))}
+        </div>
       )}
 
       {form && data && (

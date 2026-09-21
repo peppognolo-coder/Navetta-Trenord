@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bus, AlertTriangle } from 'lucide-react';
+import { Bus, AlertTriangle, Flag } from 'lucide-react';
 import { useOrari } from '../hooks/useOrari';
 import { useFavorites } from '../hooks/useFavorites';
 import RouteFilterPanel from '../components/RouteFilterPanel';
@@ -8,6 +8,7 @@ import SupremiAdvisorBanner from '../components/SupremiAdvisorBanner';
 import CorsaCard from '../components/CorsaCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ReportModal from '../components/ReportModal';
 import {
   nowHHMM,
   nowMinutes,
@@ -28,6 +29,7 @@ export default function HomeScreen() {
   const [orario, setOrario] = useState('');
   const [clock, setClock] = useState(nowHHMM());
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   // orologio in testa alla pagina, aggiornato ogni 30s (stesso comportamento
   // della versione vanilla-JS)
@@ -197,6 +199,16 @@ export default function HomeScreen() {
           ? `Aggiornato alle ${lastUpdated.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })} · auto ogni 60s`
           : 'Aggiornamento automatico ogni 60s'}
       </p>
+
+      <button
+        onClick={() => setReporting(true)}
+        className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors mt-1 py-2"
+      >
+        <Flag className="w-3.5 h-3.5" />
+        Segnala un problema con gli orari
+      </button>
+
+      {reporting && <ReportModal onClose={() => setReporting(false)} />}
     </div>
   );
 }
